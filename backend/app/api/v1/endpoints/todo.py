@@ -1,18 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel.ext.asyncio.session import AsyncSession
+from typing import Literal
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, status
+
 from app.core.exceptions import TodoNotFoundError, TodoTitleEmptyError
 from app.dependencies import get_todo_service
-from app.schemas.todo import TodoCreate, TodoResponse, TodoUpdate
+from app.schemas.todo import (
+    TodoCreate,
+    TodoOrderUpdate,
+    TodoResponse,
+    TodoUpdate,
+)
 from app.services.todo_service import TodoService
 
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
 @router.get("/", response_model=list[TodoResponse])
-async def list_todos(service: TodoService = Depends(get_todo_service)):
-    return await service.get_all_todos()
+async def list_todos(
+    filter: Literal["all", "today", "overdue", "completed"] = "all",
+    service: TodoService = Depends(get_todo_service),
+):
+    return await service.get_all_todos(filter)
 
 
 @router.post("/", response_model=TodoResponse, status_code=status.HTTP_201_CREATED)
@@ -23,6 +31,15 @@ async def create_todo(
         return await service.create_todo(todo_data)
     except TodoTitleEmptyError:
         raise HTTPException(status_code=400, detail="待办标题不能为空")
+
+
+# 注意：静态路径 /order 须在 /{todo_id} 之前声明，避免被参数路径吞掉。
+@router.patch("/order", response_model=list[TodoResponse])
+async def reorder_todos(
+    order_updates: list[TodoOrderUpdate],
+    service: TodoService = Depends(get_todo_service),
+):
+    return await service.reorder_todos(order_updates)
 
 
 @router.put("/{todo_id}", response_model=TodoResponse)

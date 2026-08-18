@@ -514,6 +514,6 @@ npm run dev
 1. 后端启动后访问 `http://localhost:8000/docs` 可见 Swagger 文档
 2. 前端访问 `http://localhost:5173` 可见 Todo List 界面
 3. 可正常进行增删改查操作
-4. 页面刷新后数据持久化（存储在 SQLite 中）
+4. 页面刷新后数据持久化（存储在 SQLite 中） 
 
 ---
